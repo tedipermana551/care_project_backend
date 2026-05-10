@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from core.responses import success_response
+from core.exceptions import success_response
 from .serializers import RegisterSerializer, UserSerializer
 
 
