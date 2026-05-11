@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.authentication.urls')),
     path('api/profile/', include('apps.profiles.urls')),
+    path('api/logs/', include('apps.daily_logs.urls')),
 
     # Swagger docs
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
