@@ -24,7 +24,7 @@ def _filter_logs(qs, params):
         qs = qs.filter(mood=mood)
     if month:
         try:
-            years, mon = month.split('-')
+            year, mon = month.split('-')
             qs = qs.filter(date__year=int(year), date__month=int(mon))
         except (ValueError, AttributeError):
             pass

@@ -29,7 +29,7 @@ class ProfileMeView(APIView):
 
     def patch(self, request):
         profile = _get_or_create_profile(request.user)
-        serializer = ProfileSetupSerializer(profile, data=request.data, partial=True)
+        serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return success_response(data=UserProfileSerializer(profile).data, message='Profile successfully updated.')
@@ -44,7 +44,7 @@ class LinkPartnerView(APIView):
         from rest_framework import status
         from rest_framework.response import Response
 
-        serializer = LinkPartnerSerializer(request.user)
+        serializer = LinkPartnerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data['code'].upper()
 

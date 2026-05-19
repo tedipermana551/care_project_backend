@@ -30,5 +30,5 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ('due_date', 'pregnancy_start_date')
 
-class LinkPartnerSerializer(serializers.ModelSerializer):
+class LinkPartnerSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=10)
