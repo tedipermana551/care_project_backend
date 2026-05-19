@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 class RegisterSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(max_length=150)
     confirm_password = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=8)
 
@@ -11,7 +12,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('id', 'full_name', 'email', 'password', 'confirm_password')
 
     # Map full_name → first_name for storage convenience
-    full_name = serializers.CharField(max_length=150)
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():

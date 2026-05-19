@@ -6,5 +6,5 @@ urlpatterns = [
     path('mood/', MoodStatsView.as_view(), name='stats-mood'),
     path('sleep/', SleepStatsView.as_view(), name='stats-sleep'),
     path('exercise/', ExerciseStatsView.as_view(), name='stats-exercise'),
-    path('streak/', StreakStatsView.as_view(), name='stats-streak'),
+    path('streaks/', StreakStatsView.as_view(), name='stats-streak'),
 ]

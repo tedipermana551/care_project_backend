@@ -11,11 +11,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at',)
 
     def validate_appointment_date(self, value):
-        if value < timezone.now():
-            raise serializers.ValidationError('appointment date must be in the future')
+        if self.instance is None and value < timezone.now():
+            raise serializers.ValidationError(
+                'Appointment date must be in the future.')
         return value
 
-    def valdate_reminder_days_before(self, value):
+    def validate_reminder_days_before(self, value):
         if value < 0:
             raise serializers.ValidationError('reminder date must be greater than 0')
         return value

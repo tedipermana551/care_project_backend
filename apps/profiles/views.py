@@ -67,6 +67,15 @@ class LinkPartnerView(APIView):
             return Response({'success':False, 'message': 'Partner must have complementary roles (mother or husband)', 'errors': {}},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        if not my_profile.role or not target.role:
+            return Response({'success': False,
+                             'message': 'Both users must set their role before linking.',
+                             'errors': {}}, status=400)
+        if my_profile.role == target.role:
+            return Response({'success': False,
+                             'message': 'Partner must have a complementary role.',
+                             'errors': {}}, status=400)
+
         my_profile.partner = target
         target.partner = my_profile
         my_profile.save()
@@ -109,6 +118,11 @@ class PregnancyStatusView(APIView):
 
         if not due_date:
             return Response({'success': False, 'message': 'Due date is not set', 'errors': {}},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        if not start_date:
+            return Response({'success': False,
+                             'message': 'Pregnancy start date is not set.', 'errors': {}},
                             status=status.HTTP_404_NOT_FOUND)
 
         days_pregnant = (today - start_date).days if start_date else None

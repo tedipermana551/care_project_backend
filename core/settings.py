@@ -25,9 +25,9 @@ SECRET_KEY = 'django-insecure-#dx0%th!ka5_)70ac153bvg&7i$oltj2&&ts*ied0d1k9_$w64
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Application definition
 
 INSTALLED_APPS = [
@@ -68,6 +68,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Care Backend API',
+    'DESCRIPTION': 'Backend for daily pregnancy tracking',
+    'VERSION': '1.0.0',
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

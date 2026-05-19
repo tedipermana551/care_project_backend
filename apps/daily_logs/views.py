@@ -32,7 +32,7 @@ def _filter_logs(qs, params):
 
 class DailyLogListCreateView(APIView):
     def get(self, request):
-        qs = DailyLog.objects.get(user=request.user)
+        qs = DailyLog.objects.filter(user=request.user)
         qs = _filter_logs(qs, request.query_params)
         return success_response(data=DailyLogSerializer(qs, many=True).data)
 
@@ -94,7 +94,6 @@ class PartnerLogsView(APIView):
     permission_classes = [IsLinkedPartner]
 
     def get(self, request):
-        from rest_framework.permissions import IsAuthenticated
         partner_profile = request.user.userprofile.partner
         qs = DailyLog.objects.filter(user=partner_profile.user)
         qs = _filter_logs(qs, request.query_params)

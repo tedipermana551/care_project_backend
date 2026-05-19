@@ -22,7 +22,7 @@ class UserProfile(models.Model):
         verbose_name = 'UserProfile'
 
     def __str__(self):
-        return f'{self.user.get_full_name()} ({self.role}'
+        return f'{self.user.get_full_name()} ({self.role})'
 
     def save(self, *args, **kwargs):
         if not self.unique_code:
