@@ -18,6 +18,7 @@ class DailyLog(models.Model):
     sleep_duration = models.DecimalField(max_digits=5, decimal_places=1, help_text='hours')
     exercise_duration = models.DecimalField(max_digits=5, decimal_places=1, help_text='minutes')
     notes = models.TextField(blank=True)
+    partner_message = models.CharField(max_length=280, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

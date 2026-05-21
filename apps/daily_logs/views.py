@@ -8,7 +8,7 @@ from rest_framework import status
 from core.exceptions import success_response
 from core.permissions import IsLinkedPartner
 from .models import DailyLog
-from .serializers import DailyLogSerializer
+from .serializers import DailyLogSerializer, PartnerLogSerializer
 
 def _filter_logs(qs, params):
     start = params.get('start_date')
@@ -98,3 +98,34 @@ class PartnerLogsView(APIView):
         qs = DailyLog.objects.filter(user=partner_profile.user)
         qs = _filter_logs(qs, request.query_params)
         return success_response(data=DailyLogSerializer(qs, many=True).data)
+
+
+class PartnerMessagesView(APIView):
+    """
+    GET /api/logs/partner/messages/
+
+    Dedicated endpoint that returns ONLY logs where the partner wrote
+    a partner_message — useful for the frontend to build a "messages from
+    [partner name]" inbox view without loading every log.
+
+    Supports the same date filters as the other log endpoints.
+    Query params:
+        ?unread_only=true  — future use (requires a read-receipt model)
+        ?start_date=YYYY-MM-DD
+        ?end_date=YYYY-MM-DD
+    """
+    permission_classes = [IsLinkedPartner]
+
+    def get(self, request):
+        partner_profile = request.user.userprofile.partner
+        qs = (
+            DailyLog.objects
+            .filter(user=partner_profile.user)
+            .exclude(partner_message='')
+            .order_by('-date')
+        )
+        qs = _filter_logs(qs, request.query_params)
+        return success_response(
+            data=PartnerLogSerializer(qs, many=True).data,
+            message=f'{qs.count()} message(s) found.',
+        )

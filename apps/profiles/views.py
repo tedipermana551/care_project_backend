@@ -2,11 +2,14 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from core.exceptions import success_response
 from core.permissions import IsLinkedPartner
 from .models import UserProfile
-from .serializers import (UserProfileSerializer, ProfileSetupSerializer, ProfileUpdateSerializer, LinkPartnerSerializer)
+from .serializers import (UserProfileSerializer, ProfileSetupSerializer, ProfileUpdateSerializer,
+                          AvatarUploadSerializer, LinkPartnerSerializer)
 
 def _get_or_create_profile(user):
     profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -18,21 +21,77 @@ class ProfileSetupView(APIView):
         serializer = ProfileSetupSerializer(profile, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response(data=UserProfileSerializer(profile).data,
+        return success_response(data=UserProfileSerializer(profile, context={'request': request}).data,
                                 message='Profile set up successfully.',
                                 status=status.HTTP_201_CREATED)
 
 class ProfileMeView(APIView):
     def get(self, request):
         profile = _get_or_create_profile(request.user)
-        return success_response(data=UserProfileSerializer(profile).data)
+        return success_response(data=UserProfileSerializer(profile, context={'request': request}).data,)
 
     def patch(self, request):
         profile = _get_or_create_profile(request.user)
         serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return success_response(data=UserProfileSerializer(profile).data, message='Profile successfully updated.')
+        profile.refresh_from_db()
+        return success_response(data=UserProfileSerializer(profile, context={'request': request}).data,
+                                message='Profile successfully updated.')
+
+
+class AvatarUploadView(APIView):
+    """
+    PATCH  /api/profile/avatar/  — upload or replace profile picture
+    DELETE /api/profile/avatar/  — remove profile picture
+
+    Why a separate endpoint?
+    ─────────────────────────
+    Text fields use Content-Type: application/json.
+    File uploads use Content-Type: multipart/form-data.
+    Keeping them separate lets clients update text fields without
+    having to encode a form-data body, and vice versa.
+
+    Request format for PATCH:
+        Content-Type: multipart/form-data
+        Body key: "avatar"  (the image file)
+
+    Accepted formats : jpg, jpeg, png, webp
+    Max size         : 2 MB
+    """
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request):
+        profile = _get_or_create_profile(request.user)
+        serializer = AvatarUploadSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        profile.refresh_from_db()
+        return success_response(
+            data={
+                'avatar_url': (
+                    request.build_absolute_uri(profile.avatar.url)
+                    if profile.avatar else None
+                )
+            },
+            message='Profile picture updated successfully.',
+        )
+
+    def delete(self, request):
+        profile = _get_or_create_profile(request.user)
+
+        if not profile.avatar:
+            return Response(
+                {'success': False, 'message': 'No profile picture to remove.', 'errors': {}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete the file from disk, then clear the field
+        profile.avatar.delete(save=False)
+        profile.avatar = None
+        profile.save(update_fields=['avatar'])
+
+        return success_response(message='Profile picture removed successfully.')
 
 class MyCodeView(APIView):
     def get(self, request):

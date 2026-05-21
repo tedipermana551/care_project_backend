@@ -12,6 +12,7 @@ drf-spectacular = "*"
 python-decouple = "*"
 psycopg2-binary = "*"
 djangorestframework-stubs = "*"
+pillow = "*"
 
 [dev-packages]
 
