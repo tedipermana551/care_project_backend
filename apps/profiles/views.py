@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.db import transaction
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -134,6 +135,19 @@ class LinkPartnerView(APIView):
             return Response({'success': False,
                              'message': 'Partner must have a complementary role.',
                              'errors': {}}, status=400)
+
+        with transaction.atomic():
+            my_profile = UserProfile.objects.select_for_update().get(pk=my_profile.pk)
+            target = UserProfile.objects.select_for_update().get(pk=target.pk)
+
+            if my_profile.partner is not None:
+                return Response({'success': False, 'message': 'You are already linked to a partner.', 'errors': {}},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            if target.partner is not None:
+                return Response(
+                    {'success': False, 'message': 'That user is already linked to a partner.', 'errors': {}},
+                    status=status.HTTP_400_BAD_REQUEST)
 
         my_profile.partner = target
         target.partner = my_profile

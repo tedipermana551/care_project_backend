@@ -9,10 +9,13 @@ djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 drf-spectacular = "*"
-python-decouple = "*"
-psycopg2-binary = "*"
 djangorestframework-stubs = "*"
 pillow = "*"
+gunicorn = "*"
+whitenoise = "*"
+dj-database-url = "*"
+psycopg2-binary = "*"
+python-decouple = "*"
 
 [dev-packages]
 

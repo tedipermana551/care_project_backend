@@ -1,14 +1,19 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.throttling import AnonRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken, OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from core.exceptions import success_response
 from .serializers import RegisterSerializer, UserSerializer
 
+class AuthRateThrottle(AnonRateThrottle):
+    """Strict per-IP throttle applied only to auth endpoints: 10 requests/hour."""
+    scope = 'auth'
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -29,6 +34,7 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         from django.contrib.auth import authenticate
@@ -52,6 +58,10 @@ class LoginView(APIView):
                 {'success': False, 'message': 'Invalid email or password.', 'errors': {}},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        outstanding_qs = OutstandingToken.objects.filter(user=user)
+        for token in outstanding_qs:
+            BlacklistedToken.objects.get_or_create(token=token)
 
         refresh = RefreshToken.for_user(user)
         return success_response(

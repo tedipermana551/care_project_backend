@@ -1,0 +1,2 @@
+web: gunicorn core.wsgi --workers 2 --timeout 60 --bind 0.0.0.0:$PORT
+release: python manage.py migrate --noinput

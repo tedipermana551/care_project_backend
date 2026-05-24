@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -10,6 +10,18 @@ from core.permissions import IsLinkedPartner
 from .models import DailyLog
 from .serializers import DailyLogSerializer, PartnerLogSerializer
 
+def _parse_date(value, param_name):
+    """Parse a YYYY-MM-DD string. Returns (date, error_response) tuple."""
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date(), None
+    except ValueError:
+        return None, Response(
+            {'success': False,
+             'message': f"Invalid {param_name} format. Expected YYYY-MM-DD.",
+             'errors': {}},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
 def _filter_logs(qs, params):
     start = params.get('start_date')
     end = params.get('end_date')
@@ -17,9 +29,15 @@ def _filter_logs(qs, params):
     month = params.get('month')
 
     if start:
-        qs = qs.filter(date__gte=start)
+        parsed, err = _parse_date(start, 'start_date')
+        if err:
+            return qs, err
+        qs = qs.filter(date__gte=parsed)
     if end:
-        qs = qs.filter(date__lte=end)
+        parsed, err = _parse_date(end, 'end_date')
+        if err:
+            return qs, err
+        qs = qs.filter(date__lte=parsed)
     if mood:
         qs = qs.filter(mood=mood)
     if month:
@@ -124,8 +142,11 @@ class PartnerMessagesView(APIView):
             .exclude(partner_message='')
             .order_by('-date')
         )
-        qs = _filter_logs(qs, request.query_params)
+        qs, err = _filter_logs(qs, request.query_params)
+        if err:
+            return err
+        serialized = PartnerLogSerializer(qs, many=True).data
         return success_response(
-            data=PartnerLogSerializer(qs, many=True).data,
-            message=f'{qs.count()} message(s) found.',
+            data=serialized,
+            message=f'{len(serialized)} message(s) found.',
         )
