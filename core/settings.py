@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
 from pathlib import Path
-from decouple import config, Csv
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,24 +20,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-in-hf-secrets')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
-DATABASE_URL = config('DATABASE_URL', default=None)
-if DATABASE_URL:
+_db_url = os.environ.get('DATABASE_URL', '')
+if _db_url:
+    import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(
-            DATABASE_URL,
+            _db_url,
             conn_max_age=600,
             ssl_require=True,
         )
     }
 else:
-    # Local fallback
+    # Local SQLite fallback (dev only)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -109,7 +108,7 @@ SPECTACULAR_SETTINGS = {
 
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-_cors_origins = config('CORS_ALLOWED_ORIGINS', default='')
+_cors_origins = os.environ.get('CORS_ALLOWED_ORIGINS', '')
 if _cors_origins:
     CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',') if o.strip()]
 else:
