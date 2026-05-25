@@ -1,6 +1,26 @@
-.idea/
-db.sqlite3
-.env
+# Python
 *.pyc
+*.pyo
 __pycache__/
+*.egg-info/
+dist/
+build/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
 media/
+staticfiles/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
