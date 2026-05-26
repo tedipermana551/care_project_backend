@@ -32,4 +32,4 @@ USER appuser
 EXPOSE 7860
 
 # ── Entrypoint: migrate then start gunicorn ───────────────────────────────────
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn core.wsgi --workers 2 --timeout 120 --bind 0.0.0.0:7860"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py create_superuser_env && gunicorn core.wsgi --workers 2 --timeout 120 --bind 0.0.0.0:7860"]
