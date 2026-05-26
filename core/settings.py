@@ -209,21 +209,20 @@ STORAGES = {
 import os
 
 # ── Media files (user uploads: avatars, etc.) ─────────────────────────────────
+# ── Media files (user uploads: avatars, etc.) ─────────────────────────────────
 if os.environ.get('USE_R2') == 'True':
     # Cloudflare R2 Storage
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     AWS_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME')
-    AWS_S3_ENDPOINT_URL = os.environ.get('R2_CUSTOM_DOMAIN')
+    AWS_S3_ENDPOINT_URL = f"https://{os.environ.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
     AWS_S3_REGION_NAME = 'auto'
     AWS_DEFAULT_ACL = 'public-read'
     AWS_S3_FILE_OVERWRITE = False
-    MEDIA_URL = f"{os.environ.get('R2_CUSTOM_DOMAIN')}/{os.environ.get('R2_BUCKET_NAME')}/"
+    MEDIA_URL = f"{os.environ.get('R2_CUSTOM_DOMAIN')}/"  # pub-xxx.r2.dev/
 else:
     # Local fallback (for local development only)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # ─────────────────────────────────────────────────────────────────────────────
