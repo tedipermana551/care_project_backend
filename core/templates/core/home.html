@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Care API — Backend Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0e11;
+      --surface:   #17151c;
+      --border:    #2a2535;
+      --border-hi: #3d3550;
+      --pink:      #f472b6;
+      --pink-dim:  #9d4d79;
+      --lavender:  #c084fc;
+      --sage:      #86efac;
+      --cream:     #fde8d8;
+      --text:      #ede8f5;
+      --muted:     #8b7fa8;
+      --tag-bg:    #1e1829;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── GLOW BLOBS ── */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.12;
+    }
+    .blob-1 { width: 600px; height: 600px; background: var(--pink); top: -200px; left: -150px; }
+    .blob-2 { width: 500px; height: 500px; background: var(--lavender); bottom: -200px; right: -100px; }
+    .blob-3 { width: 300px; height: 300px; background: var(--sage); top: 40%; left: 50%; transform: translate(-50%,-50%); opacity: 0.07; }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5rem 0 3.5rem;
+      text-align: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #1e1829;
+      border: 1px solid var(--border-hi);
+      border-radius: 999px;
+      padding: 0.3rem 1rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--lavender);
+      margin-bottom: 2rem;
+      font-family: 'DM Mono', monospace;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .pill-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--sage);
+      box-shadow: 0 0 6px var(--sage);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero-emoji {
+      font-size: 3.5rem;
+      display: block;
+      margin-bottom: 1.2rem;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    h1 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      animation: fadeDown 0.6s 0.15s ease both;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--pink);
+    }
+
+    .hero-sub {
+      margin-top: 1.2rem;
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+      animation: fadeDown 0.6s 0.25s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 2.5rem;
+      animation: fadeDown 0.6s 0.35s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.6rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--pink);
+      color: #1a0f14;
+    }
+    .btn-primary:hover {
+      background: #f9a8d4;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(244,114,182,0.3);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+    }
+    .btn-ghost:hover {
+      border-color: var(--lavender);
+      color: var(--lavender);
+      background: rgba(192,132,252,0.06);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* ── STACK ROW ── */
+    .stack-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 1.5rem 0 3rem;
+      animation: fadeUp 0.7s 0.5s ease both;
+    }
+
+    .stack-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .stack-chip:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+    }
+    .stack-chip .icon { font-size: 0.9rem; }
+
+    /* ── SECTION HEADER ── */
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 0.6rem;
+    }
+
+    h2 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.7rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── INFRA CARDS ── */
+    .infra-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+      margin-bottom: 4rem;
+    }
+
+    .infra-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .infra-card:hover {
+      border-color: var(--border-hi);
+      transform: translateY(-2px);
+    }
+
+    .infra-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .infra-name {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 0.25rem;
+    }
+
+    .infra-title {
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .infra-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── ENDPOINTS ── */
+    .endpoint-group {
+      margin-bottom: 3rem;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .group-icon { font-size: 1.2rem; }
+
+    .group-title {
+      font-family: 'Lora', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .group-count {
+      margin-left: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+    }
+
+    .endpoint-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(42,37,53,0.6);
+      transition: background 0.15s;
+      border-radius: 6px;
+    }
+    .endpoint-row:last-child { border-bottom: none; }
+    .endpoint-row:hover { background: rgba(255,255,255,0.02); }
+
+    .method-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      min-width: 46px;
+      text-align: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .m-get    { background: rgba(134,239,172,0.12); color: var(--sage); border: 1px solid rgba(134,239,172,0.2); }
+    .m-post   { background: rgba(192,132,252,0.12); color: var(--lavender); border: 1px solid rgba(192,132,252,0.2); }
+    .m-patch  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+    .m-delete { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+
+    .endpoint-info { flex: 1; min-width: 0; }
+
+    .endpoint-path {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .endpoint-path .param { color: var(--pink); }
+
+    .endpoint-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .endpoint-tags {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-top: 0.35rem;
+    }
+
+    .tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 3px;
+      border: 1px solid;
+    }
+
+    .tag-auth   { color: var(--pink);     border-color: rgba(244,114,182,0.25); background: rgba(244,114,182,0.06); }
+    .tag-open   { color: var(--sage);     border-color: rgba(134,239,172,0.25); background: rgba(134,239,172,0.06); }
+    .tag-partner{ color: var(--lavender); border-color: rgba(192,132,252,0.25); background: rgba(192,132,252,0.06); }
+
+    /* ── AUTH INFO BOX ── */
+    .info-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--lavender);
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 2.5rem;
+      font-size: 0.85rem;
+    }
+
+    .info-box code {
+      font-family: 'DM Mono', monospace;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: var(--cream);
+    }
+
+    /* ── RATE LIMIT GRID ── */
+    .rate-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 3rem;
+    }
+
+    .rate-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem;
+      text-align: center;
+    }
+
+    .rate-num {
+      font-family: 'Lora', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--cream);
+    }
+
+    .rate-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 2rem;
+    }
+
+    footer a {
+      color: var(--lavender);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .rate-grid { grid-template-columns: 1fr; }
+      .infra-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="pill">
+      <span class="pill-dot"></span>
+      v1.0.0 · Live on Hugging Face
+    </div>
+    <span class="hero-emoji">🤰</span>
+    <h1>Care <em>Backend</em> API</h1>
+    <p class="hero-sub">A REST API for pregnancy companion apps. Daily logs, appointments, partner linking, and health statistics — all in one place.</p>
+    <div class="hero-actions">
+      <a href="/api/docs/" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Try with Swagger UI
+      </a>
+      <a href="/api/redoc/" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        ReDoc Reference
+      </a>
+    </div>
+  </header>
+
+  <!-- TECH STACK CHIPS -->
+  <div class="stack-row">
+    <div class="stack-chip"><span class="icon">🐍</span> Python 3.14</div>
+    <div class="stack-chip"><span class="icon">🎸</span> Django 6</div>
+    <div class="stack-chip"><span class="icon">🔌</span> DRF 3.17</div>
+    <div class="stack-chip"><span class="icon">🔐</span> SimpleJWT</div>
+    <div class="stack-chip"><span class="icon">🐘</span> PostgreSQL</div>
+    <div class="stack-chip"><span class="icon">🐳</span> Docker</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- INFRASTRUCTURE -->
+  <section class="fade-in">
+    <p class="section-label">Infrastructure</p>
+    <h2>Where everything lives</h2>
+
+    <div class="infra-grid">
+      <div class="infra-card">
+        <div class="infra-icon">🐘</div>
+        <div class="infra-name">Database</div>
+        <div class="infra-title">Neon (PostgreSQL)</div>
+        <div class="infra-desc">Serverless Postgres that scales to zero. SSL-required connection via <code>DATABASE_URL</code>. Falls back to SQLite locally.</div>
+      </div>
+      <div class="infra-card">
+        <div class="infra-icon">☁️</div>
+        <div class="infra-name">File Storage</div>
+        <div class="infra-title">Cloudflare R2</div>
+        <div class="infra-desc">S3-compatible object storage for user avatars. Zero egress fees. Activated when <code>USE_R2=True</code>.</div>
+      </div>
+      <div class="infra-card">
+        <div class="infra-icon">🤗</div>
+        <div class="infra-name">Deployment</div>
+        <div class="infra-title">Hugging Face Spaces</div>
+        <div class="infra-desc">Dockerized and running on port 7860. Auto-migrates on every cold start via Gunicorn.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTHENTICATION -->
+  <section class="fade-in">
+    <p class="section-label">How to authenticate</p>
+    <h2>JWT Bearer Tokens</h2>
+
+    <div class="info-box">
+      After logging in, include your token on every request:<br><br>
+      <code>Authorization: Bearer &lt;your_access_token&gt;</code>
+      <br><br>
+      Use the <code>POST /api/auth/token/refresh/</code> endpoint with your <strong>refresh</strong> token to get a new access token when it expires.
+    </div>
+  </section>
+
+  <!-- RATE LIMITS -->
+  <section class="fade-in">
+    <p class="section-label">Rate Limiting</p>
+    <h2>Request limits</h2>
+    <div class="rate-grid">
+      <div class="rate-card">
+        <div class="rate-num" style="color: var(--sage)">1000</div>
+        <div class="rate-label">requests / hour<br>Authenticated users</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-num" style="color: var(--lavender)">20</div>
+        <div class="rate-label">requests / hour<br>Anonymous users</div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-num" style="color: var(--pink)">10</div>
+        <div class="rate-label">requests / hour<br>Auth endpoints (per IP)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API REFERENCE -->
+  <section class="fade-in">
+    <p class="section-label">API Reference</p>
+    <h2>All endpoints</h2>
+
+    <!-- AUTH -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">🔐</span>
+        <span class="group-title">Authentication</span>
+        <span class="group-count">4 endpoints</span>
+      </div>
+
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/auth/register/</div>
+          <div class="endpoint-desc">Register a new user. Returns access + refresh JWT tokens.</div>
+          <div class="endpoint-tags"><span class="tag tag-open">public</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/auth/login/</div>
+          <div class="endpoint-desc">Login with email + password. Blacklists old tokens and issues fresh ones.</div>
+          <div class="endpoint-tags"><span class="tag tag-open">public</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/auth/token/refresh/</div>
+          <div class="endpoint-desc">Get a new access token using your refresh token.</div>
+          <div class="endpoint-tags"><span class="tag tag-open">public</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/auth/logout/</div>
+          <div class="endpoint-desc">Blacklist the refresh token to invalidate the session.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">👤</span>
+        <span class="group-title">Profile</span>
+        <span class="group-count">6 endpoints</span>
+      </div>
+
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/setup/</div>
+          <div class="endpoint-desc">First-time profile setup — set role (mother / husband), due date, and nickname.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/me/</div>
+          <div class="endpoint-desc">Get your full profile including partner info.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-patch">PATCH</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/me/</div>
+          <div class="endpoint-desc">Update profile fields partially (nickname, about, due_date, etc.).</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-patch">PATCH</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/avatar/</div>
+          <div class="endpoint-desc">Upload profile picture. Send as <code>multipart/form-data</code> with key <code>avatar</code>. Max 2 MB.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-delete">DEL</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/avatar/</div>
+          <div class="endpoint-desc">Remove your current profile picture.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/my-code/</div>
+          <div class="endpoint-desc">Get your unique 8-character partner linking code.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/link-partner/</div>
+          <div class="endpoint-desc">Link to your partner using their unique code. Roles must be complementary.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-delete">DEL</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/profile/unlink-partner/</div>
+          <div class="endpoint-desc">Unlink from your partner. Removes the connection for both accounts.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREGNANCY -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">🤰</span>
+        <span class="group-title">Pregnancy Status</span>
+        <span class="group-count">1 endpoint</span>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/pregnancy/status/</div>
+          <div class="endpoint-desc">Returns weeks pregnant, trimester, days until due date, progress %, and overdue status.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY LOGS -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">📓</span>
+        <span class="group-title">Daily Logs</span>
+        <span class="group-count">7 endpoints</span>
+      </div>
+
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/</div>
+          <div class="endpoint-desc">List all your logs. Filter by <code>start_date</code>, <code>end_date</code>, <code>mood</code>, or <code>month</code>.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/</div>
+          <div class="endpoint-desc">Create a log entry. One per day. Fields: mood, sleep_duration, exercise_duration, complaints, notes, partner_message.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/today/</div>
+          <div class="endpoint-desc">Shortcut to fetch today's log entry.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/<span class="param">{YYYY-MM-DD}</span>/</div>
+          <div class="endpoint-desc">Get a specific log by date.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-patch">PATCH</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/<span class="param">{YYYY-MM-DD}</span>/</div>
+          <div class="endpoint-desc">Update a specific log partially.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-delete">DEL</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/<span class="param">{YYYY-MM-DD}</span>/</div>
+          <div class="endpoint-desc">Delete a specific log.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/partner/</div>
+          <div class="endpoint-desc">View your partner's logs. Supports the same date/mood filters.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span><span class="tag tag-partner">💑 partner linked</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/logs/partner/messages/</div>
+          <div class="endpoint-desc">Only logs where your partner left a message. Ordered newest first.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span><span class="tag tag-partner">💑 partner linked</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">📅</span>
+        <span class="group-title">Appointments</span>
+        <span class="group-count">5 endpoints</span>
+      </div>
+
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/</div>
+          <div class="endpoint-desc">List all appointments.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-post">POST</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/</div>
+          <div class="endpoint-desc">Create an appointment with title, doctor name, location, date, and notes.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/upcoming/</div>
+          <div class="endpoint-desc">Only future, not-yet-completed appointments.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/<span class="param">{id}</span>/</div>
+          <div class="endpoint-desc">Get a single appointment by ID.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-patch">PATCH</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/<span class="param">{id}</span>/</div>
+          <div class="endpoint-desc">Update an appointment partially.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-delete">DEL</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/<span class="param">{id}</span>/</div>
+          <div class="endpoint-desc">Delete an appointment.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-patch">PATCH</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/<span class="param">{id}</span>/complete/</div>
+          <div class="endpoint-desc">Mark an appointment as completed.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/appointments/partner/</div>
+          <div class="endpoint-desc">View all of your partner's appointments.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span><span class="tag tag-partner">💑 partner linked</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTICS -->
+    <div class="endpoint-group">
+      <div class="group-header">
+        <span class="group-icon">📊</span>
+        <span class="group-title">Statistics</span>
+        <span class="group-count">5 endpoints</span>
+      </div>
+
+      <div class="info-box" style="margin-bottom: 1rem; font-size: 0.78rem;">
+        All stats endpoints support <code>?period=weekly</code>, <code>?period=monthly</code>, or custom <code>?start_date=</code> + <code>?end_date=</code> filters.
+      </div>
+
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/stats/summary/</div>
+          <div class="endpoint-desc">Total logs, streak, avg sleep, avg exercise, mood distribution.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/stats/mood/</div>
+          <div class="endpoint-desc">Mood distribution counts + day-by-day mood timeline.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/stats/sleep/</div>
+          <div class="endpoint-desc">Average sleep hours + timeline.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/stats/exercise/</div>
+          <div class="endpoint-desc">Average exercise minutes + timeline.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+      <div class="endpoint-row">
+        <span class="method-badge m-get">GET</span>
+        <div class="endpoint-info">
+          <div class="endpoint-path">/api/stats/streaks/</div>
+          <div class="endpoint-desc">Current streak, longest streak, total logged days, last log date.</div>
+          <div class="endpoint-tags"><span class="tag tag-auth">🔒 auth required</span></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    <p>
+      Care Backend API &nbsp;·&nbsp;
+      <a href="/api/docs/">Swagger UI</a> &nbsp;·&nbsp;
+      <a href="/api/redoc/">ReDoc</a> &nbsp;·&nbsp;
+      <a href="/api/schema/">OpenAPI Schema</a> &nbsp;·&nbsp;
+      <a href="/admin/">Admin</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.72rem;">Built with Django + DRF &nbsp;·&nbsp; Deployed on Hugging Face Spaces</p>
+  </footer>
+
+</div>
+
+<script>
+  // Scroll-triggered fade-ins
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
