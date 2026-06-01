@@ -5,11 +5,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     full_name = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
+    partner = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
         fields = ('id', 'full_name', 'email', 'role', 'unique_code','nickname', 'about',
-            'avatar_url', 'due_date', 'pregnancy_start_date', 'created_at', 'updated_at')
+            'avatar_url', 'due_date', 'pregnancy_start_date', 'created_at', 'updated_at', 'partner')
         read_only_fields = ('unique_code', 'created_at', 'updated_at')
 
     def get_full_name(self, obj):
@@ -30,6 +31,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.avatar.url)
         # Fallback: return the relative URL if no request in context
         return obj.avatar.url
+
+    def get_partner(self, obj):
+        """
+        Returns basic profile details of the linked partner if one exists.
+        """
+        if not obj.partner:
+            return None
+        return {
+            'id': obj.partner.id,
+            'full_name': obj.partner.user.get_full_name(),
+            'unique_code': obj.partner.unique_code,
+            'role': obj.partner.role,
+        }
 
 class ProfileSetupSerializer(serializers.ModelSerializer):
     class Meta:
